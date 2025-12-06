@@ -9,7 +9,6 @@ export function updateStats(data) {
     // Calculate statistics - only count published records
     const publishedData = data.filter(d => d.publish === true);
     const totalSamples = publishedData.length;
-    const uniqueCounties = new Set(publishedData.filter(d => d.countyName).map(d => d.countyName)).size;
 
     // Helper function to normalize result strings for comparison
     const normalizeResult = (result) => {
@@ -86,7 +85,6 @@ export function updateStats(data) {
     // Log stats for debugging
     console.log('Stats updated:', {
         totalSamples,
-        uniqueCounties,
         pendingTests,
         positiveTests,
         notDetectedTests,

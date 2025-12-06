@@ -15,7 +15,6 @@ export function createTable(selector) {
         result: new Set(),
         sex: new Set(),
         age: new Set(),
-        collectionType: new Set(),
         sampleType: new Set(),
         collectionDateStart: null,
         collectionDateEnd: null,
@@ -46,7 +45,6 @@ export function createTable(selector) {
         { key: 'deerSexName', label: 'Sex', width: '60px' },
         { key: 'deerAgeName', label: 'Age', width: '60px' },
         { key: 'sampleType', label: 'Sample Type', width: '100px' },
-        { key: 'collectionTypeName', label: 'Collection', width: '120px' },
         { key: 'telecheckId', label: 'Telecheck ID', width: '120px' }
     ];
 
@@ -144,7 +142,6 @@ export function createTable(selector) {
         const results = [...new Set(data.map(d => d.result).filter(v => v))].sort();
         const sexes = [...new Set(data.map(d => d.deerSexName).filter(v => v))].sort();
         const ages = [...new Set(data.map(d => d.deerAgeName).filter(v => v))].sort();
-        const collectionTypes = [...new Set(data.map(d => d.collectionTypeName).filter(v => v))].sort();
         const sampleTypes = [...new Set(data.map(d => d.sampleType).filter(v => v))].sort();
 
         // Create checkboxes for results
@@ -163,13 +160,6 @@ export function createTable(selector) {
 
         // Create checkboxes for age
         createCheckboxGroup('#filter-age-group', ages, filters.age, () => {
-            applyFilters();
-            renderTable();
-            renderPagination();
-        });
-
-        // Create checkboxes for collection type
-        createCheckboxGroup('#filter-collection-group', collectionTypes, filters.collectionType, () => {
             applyFilters();
             renderTable();
             renderPagination();
@@ -213,7 +203,6 @@ export function createTable(selector) {
         filters.result.clear();
         filters.sex.clear();
         filters.age.clear();
-        filters.collectionType.clear();
         filters.sampleType.clear();
         filters.collectionDateStart = null;
         filters.collectionDateEnd = null;
@@ -252,9 +241,6 @@ export function createTable(selector) {
                 return false;
             }
             if (filters.age.size > 0 && !filters.age.has(d.deerAgeName)) {
-                return false;
-            }
-            if (filters.collectionType.size > 0 && !filters.collectionType.has(d.collectionTypeName)) {
                 return false;
             }
             if (filters.sampleType.size > 0 && !filters.sampleType.has(d.sampleType)) {
