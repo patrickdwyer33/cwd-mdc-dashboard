@@ -33,6 +33,22 @@ export async function createMap(selector) {
         .style('pointer-events', 'none')
         .style('z-index', '1000');
 
+    // Track selected county for toggling
+    let selectedCounty = null;
+
+    // Add background rectangle to capture clicks outside counties
+    svg.append('rect')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('fill', 'transparent')
+        .style('cursor', 'pointer')
+        .on('click', function() {
+            // Clear county filter when clicking background
+            selectedCounty = null;
+            d3.select('#county-filter').node().value = '';
+            d3.select('#county-filter').dispatch('change');
+        });
+
     // Load Missouri counties from US Atlas
     let moCounties = null;
     let countiesGroup = svg.append('g').attr('class', 'counties');
@@ -73,6 +89,23 @@ export async function createMap(selector) {
             .attr('stroke', '#fff')
             .attr('stroke-width', 1)
             .style('cursor', 'pointer');
+
+        // Draw state border (outline of Missouri)
+        const stateBorder = topojson.mesh(us, us.objects.counties, (a, b) => {
+            // Only draw borders between Missouri and non-Missouri counties (exterior borders)
+            const aMO = a.id.toString().startsWith('29');
+            const bMO = b ? b.id.toString().startsWith('29') : false;
+            return aMO !== bMO;
+        });
+
+        svg.append('path')
+            .datum(stateBorder)
+            .attr('d', path)
+            .attr('class', 'state-border')
+            .attr('fill', 'none')
+            .attr('stroke', '#333')
+            .attr('stroke-width', 2.5)
+            .attr('pointer-events', 'none');
 
     } catch (error) {
         console.error('Error loading Missouri counties:', error);
@@ -144,7 +177,9 @@ export async function createMap(selector) {
                             `);
                     }
 
+                    // Bring county to front and highlight
                     d3.select(this)
+                        .raise()
                         .attr('stroke', '#000')
                         .attr('stroke-width', 2);
                 })
@@ -161,9 +196,18 @@ export async function createMap(selector) {
                         .attr('stroke-width', 1);
                 })
                 .on('click', function(event, d) {
+                    event.stopPropagation(); // Prevent background click from firing
+
                     const countyName = d.properties?.name;
                     if (countyName) {
-                        d3.select('#county-filter').node().value = countyName;
+                        // Toggle: if clicking the same county, deselect it
+                        if (selectedCounty === countyName) {
+                            selectedCounty = null;
+                            d3.select('#county-filter').node().value = '';
+                        } else {
+                            selectedCounty = countyName;
+                            d3.select('#county-filter').node().value = countyName;
+                        }
                         d3.select('#county-filter').dispatch('change');
                     }
                 });
