@@ -1,0 +1,28 @@
+{
+  "name": "cwd-mdc-dashboard",
+  "version": "1.0.0",
+  "description": "Missouri Department of Conservation CWD surveillance data dashboard",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3": "^7.8.5",
+    "topojson": "^3.0.2"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "cwd",
+    "missouri",
+    "conservation",
+    "dashboard",
+    "d3",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT"
+}

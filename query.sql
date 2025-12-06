@@ -1,0 +1,1 @@
+https://gisblue.mdc.mo.gov/arcgis/rest/services/Terrestrial/CWD_Fall_Reporting_Dashboard/MapServer/26/query?f=json&where=1%3D1&outFields=*
