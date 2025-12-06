@@ -115,12 +115,6 @@ class CWDDashboard {
             this.filters.deduplicate = value === 'deduplicated';
             this.updateAll();
         });
-
-        // Table search
-        d3.select('#table-search').on('input', () => {
-            const searchTerm = d3.select('#table-search').node().value;
-            this.table.search(searchTerm);
-        });
     }
 
     applyFilters() {

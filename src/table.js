@@ -2,10 +2,26 @@ import * as d3 from 'd3';
 
 export function createTable(selector) {
     const container = d3.select(selector);
-    let data = [];
+    let allData = [];
     let filteredData = [];
     let currentPage = 1;
     const itemsPerPage = 20;
+
+    // Filter state
+    const filters = {
+        specimen: '',
+        county: '',
+        telecheck: '',
+        result: new Set(),
+        sex: new Set(),
+        age: new Set(),
+        collectionType: new Set(),
+        sampleType: new Set(),
+        collectionDateStart: null,
+        collectionDateEnd: null,
+        harvestDateStart: null,
+        harvestDateEnd: null
+    };
 
     // Create table structure
     const tableContainer = container.append('div')
@@ -49,6 +65,229 @@ export function createTable(selector) {
 
     let sortKey = null;
     let sortDirection = 'asc';
+
+    // Set up filter toggle
+    d3.select('#toggle-filters').on('click', function() {
+        const filtersPanel = d3.select('#table-filters');
+        const isVisible = filtersPanel.style('display') !== 'none';
+
+        filtersPanel.style('display', isVisible ? 'none' : 'block');
+        d3.select(this).text(isVisible ? 'Show Filters' : 'Hide Filters');
+    });
+
+    // Set up clear filters button
+    d3.select('#clear-filters').on('click', () => {
+        clearAllFilters();
+        applyFilters();
+        renderTable();
+        renderPagination();
+    });
+
+    // Set up search filter inputs
+    d3.select('#filter-specimen').on('input', function() {
+        filters.specimen = this.value.toLowerCase();
+        applyFiltersWithDebounce();
+    });
+
+    d3.select('#filter-county-table').on('input', function() {
+        filters.county = this.value.toLowerCase();
+        applyFiltersWithDebounce();
+    });
+
+    d3.select('#filter-telecheck').on('input', function() {
+        filters.telecheck = this.value.toLowerCase();
+        applyFiltersWithDebounce();
+    });
+
+    // Set up date filters
+    d3.select('#filter-collection-start').on('change', function() {
+        filters.collectionDateStart = this.value ? new Date(this.value) : null;
+        applyFilters();
+        renderTable();
+        renderPagination();
+    });
+
+    d3.select('#filter-collection-end').on('change', function() {
+        filters.collectionDateEnd = this.value ? new Date(this.value) : null;
+        applyFilters();
+        renderTable();
+        renderPagination();
+    });
+
+    d3.select('#filter-harvest-start').on('change', function() {
+        filters.harvestDateStart = this.value ? new Date(this.value) : null;
+        applyFilters();
+        renderTable();
+        renderPagination();
+    });
+
+    d3.select('#filter-harvest-end').on('change', function() {
+        filters.harvestDateEnd = this.value ? new Date(this.value) : null;
+        applyFilters();
+        renderTable();
+        renderPagination();
+    });
+
+    // Debounce for text inputs
+    let debounceTimer;
+    function applyFiltersWithDebounce() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            applyFilters();
+            renderTable();
+            renderPagination();
+        }, 300);
+    }
+
+    function initializeCheckboxFilters(data) {
+        // Get unique values for each categorical field
+        const results = [...new Set(data.map(d => d.result).filter(v => v))].sort();
+        const sexes = [...new Set(data.map(d => d.deerSexName).filter(v => v))].sort();
+        const ages = [...new Set(data.map(d => d.deerAgeName).filter(v => v))].sort();
+        const collectionTypes = [...new Set(data.map(d => d.collectionTypeName).filter(v => v))].sort();
+        const sampleTypes = [...new Set(data.map(d => d.sampleType).filter(v => v))].sort();
+
+        // Create checkboxes for results
+        createCheckboxGroup('#filter-result-group', results, filters.result, () => {
+            applyFilters();
+            renderTable();
+            renderPagination();
+        });
+
+        // Create checkboxes for sex
+        createCheckboxGroup('#filter-sex-group', sexes, filters.sex, () => {
+            applyFilters();
+            renderTable();
+            renderPagination();
+        });
+
+        // Create checkboxes for age
+        createCheckboxGroup('#filter-age-group', ages, filters.age, () => {
+            applyFilters();
+            renderTable();
+            renderPagination();
+        });
+
+        // Create checkboxes for collection type
+        createCheckboxGroup('#filter-collection-group', collectionTypes, filters.collectionType, () => {
+            applyFilters();
+            renderTable();
+            renderPagination();
+        });
+
+        // Create checkboxes for sample type
+        createCheckboxGroup('#filter-sample-type-group', sampleTypes, filters.sampleType, () => {
+            applyFilters();
+            renderTable();
+            renderPagination();
+        });
+    }
+
+    function createCheckboxGroup(selector, values, filterSet, onChange) {
+        const group = d3.select(selector);
+        group.selectAll('*').remove();
+
+        values.forEach(value => {
+            const label = group.append('label');
+
+            const checkbox = label.append('input')
+                .attr('type', 'checkbox')
+                .attr('value', value)
+                .on('change', function() {
+                    if (this.checked) {
+                        filterSet.add(value);
+                    } else {
+                        filterSet.delete(value);
+                    }
+                    onChange();
+                });
+
+            label.append('span').text(value);
+        });
+    }
+
+    function clearAllFilters() {
+        filters.specimen = '';
+        filters.county = '';
+        filters.telecheck = '';
+        filters.result.clear();
+        filters.sex.clear();
+        filters.age.clear();
+        filters.collectionType.clear();
+        filters.sampleType.clear();
+        filters.collectionDateStart = null;
+        filters.collectionDateEnd = null;
+        filters.harvestDateStart = null;
+        filters.harvestDateEnd = null;
+
+        // Clear UI
+        d3.select('#filter-specimen').property('value', '');
+        d3.select('#filter-county-table').property('value', '');
+        d3.select('#filter-telecheck').property('value', '');
+        d3.select('#filter-collection-start').property('value', '');
+        d3.select('#filter-collection-end').property('value', '');
+        d3.select('#filter-harvest-start').property('value', '');
+        d3.select('#filter-harvest-end').property('value', '');
+        d3.selectAll('.checkbox-group input[type="checkbox"]').property('checked', false);
+    }
+
+    function applyFilters() {
+        filteredData = allData.filter(d => {
+            // Text search filters
+            if (filters.specimen && !String(d.specimenNo).toLowerCase().includes(filters.specimen)) {
+                return false;
+            }
+            if (filters.county && !String(d.countyName || '').toLowerCase().includes(filters.county)) {
+                return false;
+            }
+            if (filters.telecheck && !String(d.telecheckId || '').toLowerCase().includes(filters.telecheck)) {
+                return false;
+            }
+
+            // Checkbox filters (only filter if at least one is checked)
+            if (filters.result.size > 0 && !filters.result.has(d.result)) {
+                return false;
+            }
+            if (filters.sex.size > 0 && !filters.sex.has(d.deerSexName)) {
+                return false;
+            }
+            if (filters.age.size > 0 && !filters.age.has(d.deerAgeName)) {
+                return false;
+            }
+            if (filters.collectionType.size > 0 && !filters.collectionType.has(d.collectionTypeName)) {
+                return false;
+            }
+            if (filters.sampleType.size > 0 && !filters.sampleType.has(d.sampleType)) {
+                return false;
+            }
+
+            // Date range filters
+            if (filters.collectionDateStart && d.collectionDate) {
+                if (d.collectionDate < filters.collectionDateStart) {
+                    return false;
+                }
+            }
+            if (filters.collectionDateEnd && d.collectionDate) {
+                if (d.collectionDate > filters.collectionDateEnd) {
+                    return false;
+                }
+            }
+            if (filters.harvestDateStart && d.harvestDate) {
+                if (d.harvestDate < filters.harvestDateStart) {
+                    return false;
+                }
+            }
+            if (filters.harvestDateEnd && d.harvestDate) {
+                if (d.harvestDate > filters.harvestDateEnd) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        currentPage = 1;
+    }
 
     function sortBy(key) {
         if (sortKey === key) {
@@ -136,6 +375,9 @@ export function createTable(selector) {
                 return d.value || '-';
             })
             .attr('data-label', d => d.key);
+
+        // Update count display
+        d3.select('#table-count').text(`${filteredData.length} samples`);
     }
 
     function renderPagination() {
@@ -195,7 +437,8 @@ export function createTable(selector) {
         const colors = {
             'Pending': '#ffc107',
             'Positive': '#dc3545',
-            'Negative': '#28a745'
+            'Not detected': '#28a745',
+            'Sample unsuitable': '#6c757d'
         };
 
         const color = colors[result] || '#6c757d';
@@ -205,9 +448,14 @@ export function createTable(selector) {
 
     return {
         update(newData) {
-            data = newData;
-            filteredData = [...data];
-            currentPage = 1;
+            allData = newData;
+            filteredData = [...allData];
+
+            // Initialize checkbox filters
+            initializeCheckboxFilters(allData);
+
+            // Apply any active filters
+            applyFilters();
 
             // Re-apply current sort if any
             if (sortKey) {
@@ -219,27 +467,8 @@ export function createTable(selector) {
         },
 
         search(searchTerm) {
-            if (!searchTerm) {
-                filteredData = [...data];
-            } else {
-                const term = searchTerm.toLowerCase();
-                filteredData = data.filter(d => {
-                    return columns.some(col => {
-                        const value = d[col.key];
-                        if (value == null) return false;
-
-                        if (value instanceof Date) {
-                            return formatDate(value).toLowerCase().includes(term);
-                        }
-
-                        return value.toString().toLowerCase().includes(term);
-                    });
-                });
-            }
-
-            currentPage = 1;
-            renderTable();
-            renderPagination();
+            // Legacy search function for backward compatibility
+            // Now handled by the filter system
         }
     };
 }

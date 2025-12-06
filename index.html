@@ -87,9 +87,70 @@
                     <div class="data-table-container">
                         <h2>Samples</h2>
                         <div class="table-controls">
-                            <input type="text" id="table-search" placeholder="Search samples...">
+                            <button id="toggle-filters" class="filter-toggle-btn">Show Filters</button>
                             <div class="table-info">
                                 <span id="table-count">0 samples</span>
+                            </div>
+                        </div>
+                        <div id="table-filters" class="table-filters" style="display: none;">
+                            <div class="filters-header">
+                                <h3>Filter Samples</h3>
+                                <button id="clear-filters" class="clear-filters-btn">Clear All Filters</button>
+                            </div>
+                            <div class="filters-grid">
+                                <!-- Search filters -->
+                                <div class="filter-section">
+                                    <label>Specimen #</label>
+                                    <input type="text" id="filter-specimen" placeholder="Search specimen number...">
+                                </div>
+                                <div class="filter-section">
+                                    <label>County</label>
+                                    <input type="text" id="filter-county-table" placeholder="Search county...">
+                                </div>
+                                <div class="filter-section">
+                                    <label>Telecheck ID</label>
+                                    <input type="text" id="filter-telecheck" placeholder="Search telecheck ID...">
+                                </div>
+
+                                <!-- Checkbox filters -->
+                                <div class="filter-section">
+                                    <label>Test Result</label>
+                                    <div class="checkbox-group" id="filter-result-group"></div>
+                                </div>
+                                <div class="filter-section">
+                                    <label>Deer Sex</label>
+                                    <div class="checkbox-group" id="filter-sex-group"></div>
+                                </div>
+                                <div class="filter-section">
+                                    <label>Deer Age</label>
+                                    <div class="checkbox-group" id="filter-age-group"></div>
+                                </div>
+                                <div class="filter-section">
+                                    <label>Collection Type</label>
+                                    <div class="checkbox-group" id="filter-collection-group"></div>
+                                </div>
+                                <div class="filter-section">
+                                    <label>Sample Type</label>
+                                    <div class="checkbox-group" id="filter-sample-type-group"></div>
+                                </div>
+
+                                <!-- Date range filters -->
+                                <div class="filter-section">
+                                    <label>Collection Date</label>
+                                    <div class="date-range">
+                                        <input type="date" id="filter-collection-start" placeholder="From">
+                                        <span>to</span>
+                                        <input type="date" id="filter-collection-end" placeholder="To">
+                                    </div>
+                                </div>
+                                <div class="filter-section">
+                                    <label>Harvest Date</label>
+                                    <div class="date-range">
+                                        <input type="date" id="filter-harvest-start" placeholder="From">
+                                        <span>to</span>
+                                        <input type="date" id="filter-harvest-end" placeholder="To">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div id="data-table"></div>

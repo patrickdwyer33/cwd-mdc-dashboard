@@ -211,23 +211,129 @@ body {
     gap: 1rem;
 }
 
-#table-search {
-    flex: 1;
-    max-width: 300px;
-    padding: 0.5rem;
-    border: 2px solid #ddd;
+.filter-toggle-btn {
+    padding: 0.6rem 1.2rem;
+    background: #4a7c59;
+    color: white;
+    border: none;
     border-radius: 4px;
     font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-#table-search:focus {
-    outline: none;
-    border-color: #4a7c59;
+.filter-toggle-btn:hover {
+    background: #3a6449;
 }
 
 .table-info {
     color: #666;
     font-size: 0.9rem;
+}
+
+/* Table Filters */
+.table-filters {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #ddd;
+}
+
+.filters-header h3 {
+    margin: 0;
+    color: #2c5530;
+    font-size: 1.1rem;
+}
+
+.clear-filters-btn {
+    padding: 0.4rem 0.8rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.clear-filters-btn:hover {
+    background: #c82333;
+}
+
+.filters-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-section label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.85rem;
+}
+
+.filter-section input[type="text"],
+.filter-section input[type="date"] {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.filter-section input:focus {
+    outline: none;
+    border-color: #4a7c59;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-range span {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.date-range input {
+    flex: 1;
 }
 
 .table-responsive {
