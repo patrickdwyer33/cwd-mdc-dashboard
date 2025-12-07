@@ -91,6 +91,8 @@ export function processData(rawData, deduplicate = true) {
         return [];
     }
 
+    const currentYear = new Date().getFullYear();
+
     const processed = rawData.map(d => {
         try {
             return {
@@ -124,7 +126,7 @@ export function processData(rawData, deduplicate = true) {
             console.warn('Error processing data row:', error, d);
             return null;
         }
-    }).filter(d => d !== null);
+    }).filter(d => d !== null && d.permitYear <= currentYear);
 
     if (deduplicate) {
         // Deduplicate by specimen number, keeping the record with the latest collection date

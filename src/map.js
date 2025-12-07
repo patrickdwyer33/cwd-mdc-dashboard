@@ -141,15 +141,6 @@ export async function createMap(selector) {
         unsuitable: 'Unsuitable'
     };
 
-    // Set up metric selector event listeners
-    d3.selectAll('input[name="map-metric"]').on('change', function() {
-        selectedMetric = this.value;
-        // Re-render the map with the current data
-        if (window.dashboard && window.dashboard.filteredData) {
-            mapAPI.update(window.dashboard.filteredData);
-        }
-    });
-
     const mapAPI = {
         update(data) {
             if (!moCounties) {
@@ -335,6 +326,13 @@ export async function createMap(selector) {
                 .style('font-size', '12px')
                 .style('font-weight', 'bold')
                 .text(metricLabels[metric]);
+        },
+
+        setMetric(metric) {
+            selectedMetric = metric;
+            if (window.dashboard && window.dashboard.filteredData) {
+                this.update(window.dashboard.filteredData);
+            }
         }
     };
 

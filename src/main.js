@@ -16,7 +16,6 @@ class CWDDashboard {
         this.filters = {
             year: '',
             county: '',
-            result: '',
             deduplicate: true
         };
 
@@ -39,6 +38,9 @@ class CWDDashboard {
 
             // Set up event listeners
             this.setupEventListeners();
+
+            // Initialize metric selection
+            this.initializeMetricSelection();
 
             // Initial render
             this.updateAll();
@@ -105,15 +107,24 @@ class CWDDashboard {
             this.updateAll();
         });
 
-        d3.select('#result-filter').on('change', () => {
-            this.filters.result = d3.select('#result-filter').node().value;
-            this.updateAll();
-        });
-
         d3.select('#dedupe-filter').on('change', () => {
             const value = d3.select('#dedupe-filter').node().value;
             this.filters.deduplicate = value === 'deduplicated';
             this.updateAll();
+        });
+
+        // Stat card click events to change map metric
+        d3.selectAll('.stat-card').on('click', (event) => {
+            const metric = event.currentTarget.getAttribute('data-metric');
+
+            // Update selected state
+            d3.selectAll('.stat-card').classed('selected', false);
+            d3.select(event.currentTarget).classed('selected', true);
+
+            // Trigger map update with new metric
+            if (this.map && this.map.setMetric) {
+                this.map.setMetric(metric);
+            }
         });
     }
 
@@ -127,9 +138,6 @@ class CWDDashboard {
                 return false;
             }
             if (this.filters.county && d.countyName !== this.filters.county) {
-                return false;
-            }
-            if (this.filters.result && d.result !== this.filters.result) {
                 return false;
             }
             return true;
@@ -146,6 +154,11 @@ class CWDDashboard {
 
         // Update table count
         d3.select('#table-count').text(`${this.filteredData.length} samples`);
+    }
+
+    initializeMetricSelection() {
+        // Set initial selected state for Total Samples
+        d3.select('.stat-card[data-metric="total"]').classed('selected', true);
     }
 
     showLoading(show) {
