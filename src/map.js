@@ -237,6 +237,11 @@ export async function createMap(selector) {
                         .raise()
                         .attr('stroke', '#000')
                         .attr('stroke-width', 2);
+
+                    // Re-raise all highlighted counties to keep them on top
+                    stickyTooltips.forEach(({county}) => {
+                        county.raise();
+                    });
                 })
                 .on('mousemove', function(event) {
                     tooltip
@@ -258,15 +263,23 @@ export async function createMap(selector) {
 
                     // Toggle sticky tooltip
                     if (stickyTooltips.has(countyName)) {
-                        // Remove existing sticky tooltip and line
-                        const {tooltip: existingTooltip, line: existingLine} = stickyTooltips.get(countyName);
+                        // Remove existing sticky tooltip, line, and county highlight
+                        const {tooltip: existingTooltip, line: existingLine, county: existingCounty} = stickyTooltips.get(countyName);
                         existingTooltip.remove();
                         existingLine.remove();
+                        // Remove highlight class from county
+                        existingCounty.classed('county-highlighted', false);
                         stickyTooltips.delete(countyName);
                     } else {
                         // Create new sticky tooltip
                         const countyStats = dataByCounty.get(normalizeCountyName(countyName));
                         if (!countyStats) return;
+
+                        // Apply highlight class to county
+                        const countyElement = d3.select(this);
+                        countyElement
+                            .raise()
+                            .classed('county-highlighted', true);
 
                         // Calculate county centroid in SVG coordinates
                         const centroid = path.centroid(d);
@@ -334,6 +347,8 @@ export async function createMap(selector) {
                             e.stopPropagation();
                             stickyTooltip.remove();
                             connectionLine.remove();
+                            // Remove highlight class from county
+                            countyElement.classed('county-highlighted', false);
                             stickyTooltips.delete(countyName);
                         });
 
@@ -371,7 +386,8 @@ export async function createMap(selector) {
                         stickyTooltip.call(drag);
                         stickyTooltips.set(countyName, {
                             tooltip: stickyTooltip,
-                            line: connectionLine
+                            line: connectionLine,
+                            county: countyElement
                         });
                     }
                 });

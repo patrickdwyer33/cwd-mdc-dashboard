@@ -231,6 +231,12 @@ body {
     border-bottom: 2px solid #ddd;
 }
 
+/* County highlighting for sticky tooltips */
+.county-highlighted {
+    stroke: #000;
+    stroke-width: 2;
+}
+
 /* Table */
 .data-table-container {
     height: 100%;
