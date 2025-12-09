@@ -13,10 +13,13 @@ export async function createMap(selector) {
 	const width = parseFloat(viewBox[2]);
 	const height = parseFloat(viewBox[3]);
 
-	// Create connection lines group (insert before fills so lines appear behind counties)
-	const linesGroup = svg
-		.insert("g", "#county-fills")
-		.attr("class", "connection-lines");
+	// Create or select connection lines group (append after outlines so lines appear on top)
+	let linesGroup = svg.select("g.connection-lines");
+	if (linesGroup.empty()) {
+		linesGroup = svg
+			.append("g")
+			.attr("class", "connection-lines");
+	}
 
 	// Create tooltip
 	const tooltip = d3
@@ -60,8 +63,12 @@ export async function createMap(selector) {
 		const fillPath = countyFillsGroup.select(`.${countyClass}`);
 		if (fillPath.empty()) return null;
 
-		const bbox = fillPath.node().getBBox();
-		return [bbox.x + bbox.width / 2, bbox.y + bbox.height / 2];
+		try {
+			const bbox = fillPath.node().getBBox();
+			return [bbox.x + bbox.width / 2, bbox.y + bbox.height / 2];
+		} catch (error) {
+			return null;
+		}
 	};
 
 	// Color scales for different metrics
@@ -195,19 +202,24 @@ export async function createMap(selector) {
                             Unsuitable: ${countyStats.unsuitable}
                         `);
 
-					// Create connection line
+					// Create connection line from county center to tooltip
 					const connectionLine = linesGroup
 						.append("line")
 						.attr("x1", centroid[0])
 						.attr("y1", centroid[1])
-						.attr("stroke", "rgba(0, 0, 0, 0.5)")
+						.attr("x2", centroid[0])
+						.attr("y2", centroid[1])
+						.attr("stroke", "rgba(0, 0, 0, 0.6)")
 						.attr("stroke-width", 2)
-						.attr("stroke-dasharray", "4,4")
+						.attr("stroke-dasharray", "5,5")
+						.attr("stroke-linecap", "round")
 						.style("pointer-events", "none");
 
-					// Helper function to update line position
+					// Helper function to update line position based on tooltip location
 					const updateLine = () => {
 						const tooltipNode = stickyTooltip.node();
+						if (!tooltipNode) return;
+
 						const tooltipRect = tooltipNode.getBoundingClientRect();
 						const svgRect = svgNode.getBoundingClientRect();
 
@@ -217,7 +229,7 @@ export async function createMap(selector) {
 						const tooltipCenterY =
 							tooltipRect.top + tooltipRect.height / 2;
 
-						// Convert to SVG coordinates
+						// Convert tooltip center from page coordinates to SVG coordinates
 						const svgX =
 							((tooltipCenterX - svgRect.left) / svgRect.width) *
 							width;
@@ -225,10 +237,11 @@ export async function createMap(selector) {
 							((tooltipCenterY - svgRect.top) / svgRect.height) *
 							height;
 
+						// Update line endpoint to tooltip center
 						connectionLine.attr("x2", svgX).attr("y2", svgY);
 					};
 
-					// Initial line position
+					// Set initial line position
 					updateLine();
 
 					// Add close button handler
@@ -356,10 +369,10 @@ export async function createMap(selector) {
 			setupCountyInteractions(dataByCounty);
 
 			// Update legend
-			this.updateLegend(maxValue, currentColorScale, selectedMetric);
+			this.updateLegend(maxValue, currentColorScale);
 		},
 
-		updateLegend(maxValue, colorScale, metric) {
+		updateLegend(maxValue, colorScale) {
 			const legendContainer = d3.select("#map-legend");
 			legendContainer.html("");
 
