@@ -56,10 +56,10 @@ export function createTable(selector) {
 			format: (value, row) => formatDate(value, row.collectionDate),
 		},
 		{ key: "result", label: "Result", width: "80px", format: formatResult },
+		{ key: "telecheckId", label: "Telecheck", width: "120px" },
 		{ key: "deerSexName", label: "Sex", width: "60px" },
 		{ key: "deerAgeName", label: "Age", width: "60px" },
 		{ key: "sampleType", label: "Sample", width: "100px" },
-		{ key: "telecheckId", label: "Telecheck", width: "120px" },
 	];
 
 	// Create table header
