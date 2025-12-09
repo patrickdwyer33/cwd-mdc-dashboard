@@ -155,8 +155,15 @@ main h2 {
 	border-right: 2px solid #ddd;
 }
 
-#map-header, #map {
+#map {
 	margin: 0;
+}
+
+#map-header {
+	margin-right: 0.5em;
+}
+
+#map-header, #map {
 	padding: 1em 0;
 	select {
 		padding: 0 1em;
@@ -418,40 +425,8 @@ button {
 		font-size: 2em;
 	}
 
-	.dashboard-header,
-	.header-content {
-		padding-left: 0;
-		padding-right: 0;
-	}
-
-	main {
-		padding: 0;
-		max-width: 100%;
-	}
-
-	main h2,
-	#map-header,
-	.map-legend,
-	#table-controls,
-	.table-filters {
-		padding-left: 1em;
-		padding-right: 1em;
-	}
-
-	#map-header,
-	.map-legend,
-	#map,
-	.table-responsive {
-		border-left: none;
-		border-right: none;
-	}
-
 	#table-controls {
 		flex-direction: column;
-	}
-
-	.table-responsive {
-		border-radius: 0;
 	}
 }
 
