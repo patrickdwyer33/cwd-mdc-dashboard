@@ -419,6 +419,13 @@ button {
 	to { transform: rotate(360deg); }
 }
 
+.loading-message {
+	margin-top: 1rem;
+	color: #4a7c59;
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
 	.dashboard-header h1 {

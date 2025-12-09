@@ -23,8 +23,10 @@ class CWDDashboard {
         try {
             this.showLoading(true);
 
-            // Load and process data (deduplicated only)
-            this.rawData = await loadData();
+            // Load and process data (deduplicated only) with progress tracking
+            this.rawData = await loadData((progress) => {
+                this.updateLoadingProgress(progress);
+            });
             this.data = processData(this.rawData, true);
 
             console.log(`Loaded ${this.data.length} CWD samples`);
@@ -125,6 +127,11 @@ class CWDDashboard {
 
     showLoading(show) {
         d3.select('#loading').style('display', show ? 'flex' : 'none');
+    }
+
+    updateLoadingProgress({ loaded, estimatedTotal, percent }) {
+        const message = `Loading data: ${loaded.toLocaleString()} of ~${estimatedTotal.toLocaleString()} records (${percent}%)`;
+        d3.select('#loading-message').text(message);
     }
 
     showError(message) {

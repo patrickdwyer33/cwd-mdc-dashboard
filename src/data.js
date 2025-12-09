@@ -2,10 +2,10 @@ import * as d3 from 'd3';
 
 const API_BASE_URL = 'https://gisblue.mdc.mo.gov/arcgis/rest/services/Terrestrial/CWD_Fall_Reporting_Dashboard/MapServer/26/query';
 
-export async function loadData() {
+export async function loadData(progressCallback = null) {
     try {
         // Try to fetch all records from API with pagination
-        const allFeatures = await fetchAllRecords();
+        const allFeatures = await fetchAllRecords(progressCallback);
 
         if (allFeatures && allFeatures.length > 0) {
             console.log(`✓ Loaded ${allFeatures.length} total records from API`);
@@ -31,58 +31,151 @@ export async function loadData() {
     }
 }
 
-async function fetchAllRecords() {
-    let allFeatures = [];
-    let offset = 0;
-    const batchSize = 2000; // Maximum records per request for ArcGIS
-    let hasMore = true;
+class BatchFetchManager {
+    constructor(apiUrl, batchSize = 2000, maxConcurrent = 4) {
+        this.apiUrl = apiUrl;
+        this.batchSize = batchSize;
+        this.maxConcurrent = maxConcurrent;
+        this.completed = new Map(); // offset -> batch data
+        this.inFlight = new Map(); // offset -> Promise
+        this.failed = new Set(); // offsets that failed after retries
+        this.nextFetchOffset = 0; // Next offset to fetch
+        this.nextAggregateOffset = 0; // Next offset to aggregate
+        this.hasMore = true;
+        this.totalFetched = 0;
+    }
 
-    while (hasMore) {
-        const url = `${API_BASE_URL}?f=json&where=1%3D1&outFields=*&resultOffset=${offset}&resultRecordCount=${batchSize}`;
+    async fetchBatch(offset, retries = 3) {
+        const url = `${this.apiUrl}?f=json&where=1%3D1&outFields=*&resultOffset=${offset}&resultRecordCount=${this.batchSize}`;
 
-        console.log(`Fetching records ${offset} to ${offset + batchSize}...`);
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                // Add 30s timeout using AbortController
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
-            }
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
 
-            const data = await response.json();
-
-            if (data.features && data.features.length > 0) {
-                // Extract attributes from features
-                const features = data.features.map(feature => feature.attributes);
-                allFeatures = allFeatures.concat(features);
-
-                console.log(`  → Fetched ${features.length} records (total so far: ${allFeatures.length})`);
-
-                // Check if there are more records
-                // ArcGIS returns exceededTransferLimit: true when there are more records
-                // OR if we got a full batch, there might be more
-                if (data.exceededTransferLimit || features.length === batchSize) {
-                    offset += batchSize;
-                } else {
-                    // Got fewer records than requested, we're done
-                    hasMore = false;
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
                 }
-            } else {
-                // No features in this batch, we're done
-                hasMore = false;
-            }
-        } catch (error) {
-            console.error(`Error fetching batch at offset ${offset}:`, error);
-            // If we have some data, return it; otherwise throw
-            if (allFeatures.length > 0) {
-                console.warn(`Returning partial data: ${allFeatures.length} records`);
-                hasMore = false;
-            } else {
-                throw error;
+
+                const data = await response.json();
+
+                if (data.features && data.features.length > 0) {
+                    const features = data.features.map(feature => feature.attributes);
+                    return {
+                        features,
+                        exceededTransferLimit: data.exceededTransferLimit || features.length === this.batchSize
+                    };
+                } else {
+                    return {
+                        features: [],
+                        exceededTransferLimit: false
+                    };
+                }
+            } catch (error) {
+                if (attempt < retries) {
+                    // Exponential backoff: 1s, 2s, 4s
+                    const delay = Math.pow(2, attempt) * 1000;
+                    console.warn(`Batch at offset ${offset} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    console.error(`Batch at offset ${offset} failed after ${retries + 1} attempts:`, error);
+                    throw error;
+                }
             }
         }
     }
 
-    return allFeatures;
+    async fetchAllBatches(progressCallback = null) {
+        const allFeatures = [];
+
+        console.log('Starting parallel batch fetching...');
+
+        while (this.hasMore || this.inFlight.size > 0) {
+            // Start new fetches up to maxConcurrent limit
+            while (this.hasMore && this.inFlight.size < this.maxConcurrent) {
+                const offset = this.nextFetchOffset;
+                console.log(`Starting fetch for offset ${offset} (${this.inFlight.size + 1}/${this.maxConcurrent} concurrent)`);
+
+                const promise = this.fetchBatch(offset)
+                    .then(result => {
+                        this.completed.set(offset, result);
+                        this.inFlight.delete(offset);
+                        this.totalFetched += result.features.length;
+
+                        console.log(`  ✓ Fetched ${result.features.length} records at offset ${offset} (total: ${this.totalFetched})`);
+
+                        return result;
+                    })
+                    .catch(() => {
+                        this.failed.add(offset);
+                        this.inFlight.delete(offset);
+                        console.error(`  ✗ Failed to fetch batch at offset ${offset}`);
+                        return null;
+                    });
+
+                this.inFlight.set(offset, promise);
+                this.nextFetchOffset += this.batchSize;
+            }
+
+            // Wait for at least one request to complete
+            if (this.inFlight.size > 0) {
+                await Promise.race(Array.from(this.inFlight.values()));
+            }
+
+            // Aggregate completed batches in sequential order
+            while (this.completed.has(this.nextAggregateOffset)) {
+                const batch = this.completed.get(this.nextAggregateOffset);
+                this.completed.delete(this.nextAggregateOffset);
+                allFeatures.push(...batch.features);
+
+                // Only set hasMore = false when we've aggregated a batch with no more data
+                if (!batch.exceededTransferLimit) {
+                    this.hasMore = false;
+                    console.log(`  → Reached end of data at offset ${this.nextAggregateOffset}`);
+                }
+
+                this.nextAggregateOffset += this.batchSize;
+            }
+
+            // Report progress
+            if (progressCallback && allFeatures.length > 0) {
+                const estimatedTotal = this.hasMore
+                    ? Math.max(this.totalFetched, this.nextFetchOffset)
+                    : this.totalFetched;
+                const percent = this.hasMore
+                    ? Math.min(Math.round((allFeatures.length / estimatedTotal) * 100), 99)
+                    : 100;
+
+                progressCallback({
+                    loaded: allFeatures.length,
+                    estimatedTotal,
+                    percent
+                });
+            }
+        }
+
+        // Check if we have any data
+        if (allFeatures.length === 0 && this.failed.size > 0) {
+            throw new Error('Failed to fetch any batches');
+        }
+
+        if (this.failed.size > 0) {
+            console.warn(`Completed with ${this.failed.size} failed batches. Returning ${allFeatures.length} records.`);
+        } else {
+            console.log(`✓ Successfully fetched all ${allFeatures.length} records using parallel batching`);
+        }
+
+        return allFeatures;
+    }
+}
+
+async function fetchAllRecords(progressCallback = null) {
+    const manager = new BatchFetchManager(API_BASE_URL, 2000, 4);
+    return await manager.fetchAllBatches(progressCallback);
 }
 
 export function processData(rawData, deduplicate = true) {
