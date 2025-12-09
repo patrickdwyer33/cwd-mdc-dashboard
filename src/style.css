@@ -67,23 +67,24 @@ main h2 {
 /* Stats */
 .stats-summary {
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	background: #fff;
+	margin-top: 1em;
 }
 
 .stat-card {
 	background: #d0d0d0;
 	border: 2px solid #ddd;
 	border-radius: 12px 12px 0 0;
-	padding: 1em 1.5em;
-	min-width: 120px;
+	padding: clamp(0.5rem, 2vw, 1rem) clamp(0.75rem, 2.5vw, 1.5rem);
+	min-width: 0;
 	text-align: center;
 	cursor: pointer;
 	transition: background 0.2s;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5em;
+	gap: clamp(0.25rem, 1vw, 0.5rem);
 }
 
 .stat-card:hover {
@@ -97,7 +98,7 @@ main h2 {
 }
 
 .stat-label {
-	font-size: 0.8em;
+	font-size: clamp(0.55rem, 1.5vw, 0.8rem);
 	color: #666;
 	text-transform: uppercase;
 	font-weight: 600;
@@ -105,7 +106,7 @@ main h2 {
 }
 
 .stat-value {
-	font-size: 1.5em;
+	font-size: clamp(0.9rem, 3vw, 1.5rem);
 	font-weight: bold;
 }
 
@@ -171,7 +172,7 @@ main h2 {
 
 #table-container {
 	margin-top: 2em;
-	border-top: 6px solid #666;
+	border-top: 8px solid #666;
 }
 
 /* Table */
@@ -447,10 +448,5 @@ button {
 @media (max-width: 480px) {
 	.dashboard-header h1 {
 		font-size: 1.75em;
-	}
-
-	.stat-card {
-		min-width: 100px;
-		padding: 0.75em;
 	}
 }
