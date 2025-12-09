@@ -433,13 +433,24 @@ button {
 	}
 
 	#map-header {
-
+		margin: 0;
+		padding: 0.75em 0;
 		select {
 			padding: 0;
 			margin: 0;
 			border-radius: 4px;
 			height: 26px;
 		}
+	}
+
+	#map-legend {
+		padding: 0;
+		margin: 0;
+		width: fit-content;
+	}
+
+	.map-legend-gradient {
+		margin: 0;
 	}
 
 	#table-controls {
@@ -453,17 +464,7 @@ button {
 	}
 }
 
-@media (max-width: 400px) {
-	#map-legend,
-	#map-header select {
-		padding: 0;
-		margin: 0;
-	}
-
-	#map-header {
-		margin: 0;
-	}
-
+@media (max-width: 340px) {
 	#map-legend {
 		width: 70%;
 	}
