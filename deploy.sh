@@ -2,7 +2,7 @@
 
 # Define variables
 REMOTE_SERVER="rulepop.com"
-REMOTE_DIR="/var/www/cwdmdc.patrickdwyer.com"
+REMOTE_DIR="/var/www/_extra/cwdmdc.patrickdwyer.com"
 LOCAL_DIR="dist/"
 
 # Execute rsync command to sync files and capture the output
