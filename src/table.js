@@ -282,14 +282,22 @@ export function createTable(selector) {
 				return false;
 			}
 
-			// Date range filters
-			if (filters.harvestDateStart && d.harvestDate) {
-				if (d.harvestDate < filters.harvestDateStart) {
+			// Date range filters (use collectionDate as fallback, same as display)
+			if (filters.harvestDateStart || filters.harvestDateEnd) {
+				const dateToCheck = d.harvestDate || d.collectionDate;
+
+				// Exclude records with no date when any date filter is active
+				if (!dateToCheck) {
 					return false;
 				}
-			}
-			if (filters.harvestDateEnd && d.harvestDate) {
-				if (d.harvestDate > filters.harvestDateEnd) {
+
+				// If start date is set, exclude records before it
+				if (filters.harvestDateStart && dateToCheck < filters.harvestDateStart) {
+					return false;
+				}
+
+				// If end date is set, exclude records after it
+				if (filters.harvestDateEnd && dateToCheck > filters.harvestDateEnd) {
 					return false;
 				}
 			}
